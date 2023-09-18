@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<head>
+    <title>{{.Post.Title}}</title>
+</head>
+<body>
+    <h1>my forum</h1>
+    <!--post details-->
+    <div class="postContainer">
+        <h2>{{.Post.Title}}</h2>
+        <p>{{.Post.Content}}</p>
+
+        <p>Likes: {{ .Likes }} </p>  
+
+        
+
+        <form action="/post-like/{{ .PostID }}" method="POST">
+            <input type="hidden" name="action" value="like">
+            <button type="submit">Like</button>
+        </form>
+        <form action="/post-like/{{ .PostID }}" method="POST">
+            <input type="hidden" name="action" value="dislike">
+            <button type="submit">Dislike</button>
+        </form>
+        
+    </div>
+    
+    <!-- <div class="postContainer">
+        <h2>{{.Post.Title}}</h2>
+        <p>{{.Post.Content}}</p>
+        <h3>Likes:</h3>
+        <form action="/post-like/{{ .PostID }}" id="like-button" method="POST">
+           <button>Like</button>
+        </form>
+        <form action="/post-dislike/{{ .PostID }}" id="dislike-button" method="POST">
+            <button>Dislike</button>
+        </form>
+    </div> -->
+
+    {{ if .Success }}
+    <p>Comment successfully posted!</p>
+    {{ end }}
+
+    <!-- Comment submission form -->
+    <div class="post-comment-container">
+        <h3>Post a Comment:</h3>
+        <form action="/post-comment/{{ .PostID }}" method="post">
+            <textarea name="commentContent" rows="4" cols="50"></textarea>
+            <br>
+            <input type="submit" value="Submit Comment">
+        </form>
+    </div>
+    
+    <!-- Capture the post's ID -->
+    {{ $postID := .PostID }}
+    
+    <!--comments-->
+    <div class="comments-container">
+        <h3>Comments:</h3>
+        {{ range .Comments }}
+            <p>{{ .Content }}</p>
+            <form action="/comment-like/{{ $postID }}" method="POST">
+                <input type="hidden" name="comment-action" value="like">
+                <button type="submit">Like</button>
+            </form>
+            <form action="/comment-like/{{ $postID }}" method="POST">
+                <input type="hidden" name="comment-action" value="dislike">
+                <button type="submit">Dislike</button>
+            </form>
+            <p>Posted at: {{ .Time }}</p>
+        {{ end }}
+    </div> 
+
+</body>
+</html>
