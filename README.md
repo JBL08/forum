@@ -7,18 +7,17 @@ This is a web forum project that allows users to communicate with each other, po
 To run this web forum application, follow these steps:
 
 1. Clone this repository to your local machine and navigate to the project directory:
-
+-
+   ```bash 
+   git clone: https://github.com/JBL08/forum.
+  ```
+-
    ```bash
- git clone https://github.com/JBL08/forum.
-   ```
-   ```bash
- cd forum
-   ```
+    cd forum
+    ```
 
 2. Open Visual Studio Code (VS Code):
- ```bash
- code .
-  ```
+   code .
 
 3. In VS Code, open the integrated terminal (usually at the bottom of the window).
 4. Run the following command to start the application:
