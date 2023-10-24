@@ -12,7 +12,6 @@ import (
 // CREATE COMMENTS FUNCTION
 func PostCommentHandler(w http.ResponseWriter, r *http.Request) {
 	// Check session cookie
-	checkCookies(w, r)
 
 	// Get postID from URL path
 	postIDStr := strings.TrimPrefix(r.URL.Path, "/post-comment/")
@@ -23,7 +22,12 @@ func PostCommentHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Retrieve the sessionID and userID from the cookie
-	_, userId, err := GetCookieValue(r)
+	sessionID := GetSessionIDFromRequest(r)
+	if sessionID == "" {
+		http.Error(w, "session not found", http.StatusBadRequest)
+		return
+	}
+	userId, err := getUserIDFromSessionID(sessionID)
 	if err != nil {
 		http.Error(w, "cookie not found", http.StatusBadRequest)
 		return
@@ -44,17 +48,11 @@ func PostCommentHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dateCreated := time.Now()
-	fmt.Println(userId)
-	userIdInt, err := strconv.Atoi(userId)
-	if err != nil {
-		http.Error(w, "Could not convert", http.StatusInternalServerError)
-		return
-	}
 
 	// Use userID and postID to create a new comment
 	//user_ID gets excecuted to the database
 	_, err = DB.Exec("INSERT INTO comments (post_id, user_id, content, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
-		postID, userIdInt, postComment, dateCreated, dateCreated)
+		postID, userId, postComment, dateCreated, dateCreated)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Could not post comment", http.StatusInternalServerError)

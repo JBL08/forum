@@ -1,6 +1,8 @@
 package forum
 
 import (
+	"database/sql"
+	"fmt"
 	"net/http"
 	"text/template"
 	"time"
@@ -40,6 +42,69 @@ func executePosts() ([]Post, error) {
 	return posts, nil
 }
 
+func getPostsLiked(userID int) ([]Post, error) {
+	var posts []Post //local struct - don't change as it duplicates the posts for some reason.
+
+	rows, err := DB.Query(`
+SELECT id, title, content, created_at FROM posts WHERE id IN(
+	SELECT post_id FROM postlikes WHERE user_id = 1 AND type = 1
+);`, userID)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, fmt.Errorf("failed to query liked posts: %v", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var post Post
+		err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.Time)
+		if err != nil {
+			return nil, err
+		}
+		// Format the datetime string
+		t, err := time.Parse("2006-01-02T15:04:05.999999999-07:00", post.Time)
+		if err != nil {
+			return nil, err
+		}
+		post.Time = t.Format("January 2, 2006, 15:04:05")
+		// make post URLs
+		post.URL = "/post/" + post.ID
+		posts = append(posts, post)
+	}
+	// reverse posts
+	posts = reverse(posts)
+	return posts, nil
+}
+
+func getPostsUser(userID int) ([]Post, error) {
+	var posts []Post //local struct - don't change as it duplicates the posts for some reason.
+
+	rows, err := DB.Query(`SELECT id, title, content, created_at FROM posts WHERE user_id = $1`, userID)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, fmt.Errorf("failed to query users posts: %v", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var post Post
+		err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.Time)
+		if err != nil {
+			return nil, err
+		}
+		// Format the datetime string
+		t, err := time.Parse("2006-01-02T15:04:05.999999999-07:00", post.Time)
+		if err != nil {
+			return nil, err
+		}
+		post.Time = t.Format("January 2, 2006, 15:04:05")
+		// make post URLs
+		post.URL = "/post/" + post.ID
+		posts = append(posts, post)
+	}
+	// reverse posts
+	posts = reverse(posts)
+	return posts, nil
+}
+
 // reverse posts (latest first)
 func reverse(s []Post) []Post {
 	//runes := []rune(s)
@@ -52,14 +117,46 @@ func reverse(s []Post) []Post {
 
 // serve homepage
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
+	// Check if the user is already logged in
+	sessionID := GetSessionIDFromRequest(r)
+	isLoggedIn := sessionID != ""
+
 	posts, err := executePosts()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	likedPosts := []Post{}
+	yourPosts := []Post{}
+	if isLoggedIn {
+		userID, err := getUserIDFromSessionID(sessionID)
+		if err != nil {
+			fmt.Printf("ERR: %s\n", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		likedPosts, err = getPostsLiked(userID)
+		if err != nil {
+			fmt.Printf("ERR: %s\n", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		yourPosts, err = getPostsUser(userID)
+		if err != nil {
+			fmt.Printf("ERR: %s\n", err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
 	data := HomePageData{
-		Posts: posts,
+		Posts:      posts,
+		LikedPosts: likedPosts,
+		YourPosts:  yourPosts,
+		IsLoggedIn: isLoggedIn, // Pass the IsLoggedIn information to the template
 	}
 
 	tmpl, err := template.ParseFiles("home.html")
@@ -131,7 +228,13 @@ func FilteredPostsHandler(w http.ResponseWriter, r *http.Request) {
 
 // retrieve posts by their category
 func getPostsByCategory(category string) ([]Post, error) {
-	rows, err := DB.Query("SELECT id, title, content, created_at FROM posts WHERE category_id = ?", category)
+	rows, err := DB.Query(`
+SELECT id, title, content, created_at FROM posts WHERE id IN(
+	SELECT post_id FROM categories_posts WHERE category_id = (
+		SELECT id FROM categories WHERE name = ?
+	)
+)
+`, category)
 	if err != nil {
 		return nil, err
 	}

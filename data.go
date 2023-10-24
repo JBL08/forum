@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"juhena-forum/forum"
 	"log"
 	"net/http"
@@ -11,7 +10,7 @@ import (
 
 func main() {
 	// var err error
-	// forum.DB, err = sql.Open("sqlite3", "./database.db")
+	// forum.DB, err = sql.Open("sqlite3", "./database/database.db")
 	// if err != nil {
 	// 	log.Fatal(err)
 	// }
@@ -19,8 +18,6 @@ func main() {
 
 	// initialise database
 	forum.Init()
-
-	fmt.Print("fetching...")
 
 	http.HandleFunc("/register", forum.RegisterHandler)
 	http.HandleFunc("/login", forum.LoginHandler)
@@ -31,7 +28,10 @@ func main() {
 	http.HandleFunc("/post-like/", forum.HandleLikesDislikes)
 	http.HandleFunc("/comment-like/", forum.CommentLikesHandler)
 	http.HandleFunc("/filtered-posts", forum.FilteredPostsHandler)
+	http.HandleFunc("/logout", forum.LogoutHandler)
+	// http.HandleFunc("/display-dislike-count", forum.DisplayDislikeCountHandler)
 
+	forum.Logger.Println("Server running on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 	forum.Shutdown()
 }
