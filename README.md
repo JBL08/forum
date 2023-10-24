@@ -17,14 +17,12 @@ To run this web forum application, follow these steps:
     ```
 
 2. Open Visual Studio Code (VS Code):
--  
 ```bash
    code .
    ```
 
 3. In VS Code, open the integrated terminal (usually at the bottom of the window).
 4. Run the following command to start the application:
--
  ```bash
  go run data.go
  ```
