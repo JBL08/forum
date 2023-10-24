@@ -17,15 +17,15 @@ To run this web forum application, follow these steps:
     ```
 
 2. Open Visual Studio Code (VS Code):
-```bash
+  ```bash
    code .
    ```
 
 3. In VS Code, open the integrated terminal (usually at the bottom of the window).
 4. Run the following command to start the application:
- ```bash
- go run data.go
- ```
+  ```bash
+  go run data.go
+  ```
 
 ## Features
 User Authentication
@@ -63,7 +63,7 @@ Implement user registration and authentication.
 Enable users to create posts and comments.
 Allow liking and disliking of posts and comments.
 Implement filtering of posts by categories, created posts, and liked posts.
-Use Docker for containerization.
+Use Docker for containerisation.
 Handle website errors and HTTP status codes.
 Handle technical errors gracefully.
 Adhere to coding best practices.
